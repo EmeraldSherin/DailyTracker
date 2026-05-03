@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${fileName} ?: 'Excel Viewer'">Excel Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        [data-theme="dark"] {
+            --bg:          #0f1117;
+            --surface:     #1a1e2e;
+            --surface2:    #222840;
+            --border:      #2c3350;
+            --border-h:    #4a5280;
+            --accent:      #5b6af0;
+            --accent-soft: rgba(91,106,240,0.13);
+            --green:       #1fca96;
+            --green-soft:  rgba(31,202,150,0.11);
+            --yellow:      #f0b429;
+            --blue:        #4da6ff;
+            --text:        #dde2f0;
+            --text2:       #a0aac8;
+            --muted:       #5a6380;
+            --shadow:      0 2px 18px rgba(0,0,0,0.45);
+            --row-alt:     #1e2235;
+            --row-hover:   rgba(91,106,240,0.08);
+            --header-bg:   #151929;
+        }
+
+        [data-theme="light"] {
+            --bg:          #eef0f7;
+            --surface:     #ffffff;
+            --surface2:    #f4f5fb;
+            --border:      #dde1ef;
+            --border-h:    #9aa0c0;
+            --accent:      #4a58e0;
+            --accent-soft: rgba(74,88,224,0.07);
+            --green:       #0ea876;
+            --green-soft:  rgba(14,168,118,0.08);
+            --yellow:      #c8870a;
+            --blue:        #2680d4;
+            --text:        #1c2038;
+            --text2:       #4a527a;
+            --muted:       #8890aa;
+            --shadow:      0 2px 12px rgba(0,0,0,0.07);
+            --row-alt:     #f8f9fd;
+            --row-hover:   rgba(74,88,224,0.05);
+            --header-bg:   #f0f2fa;
+        }
+
+        html { transition: background 0.25s; }
+
+        body {
+            font-family: 'Source Sans 3', 'Calibri', 'Segoe UI', sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh;
+            transition: background 0.25s, color 0.25s;
+        }
+
+        /* NAV */
+        nav {
+            position: sticky; top: 0; z-index: 200;
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            padding: 0 32px; height: 56px; gap: 2px;
+            box-shadow: var(--shadow);
+            transition: background 0.25s, border-color 0.25s;
+        }
+
+        .brand {
+            font-family: 'Crimson Pro', 'Times New Roman', Georgia, serif;
+            font-weight: 700; font-size: 21px;
+            color: var(--accent); margin-right: auto;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 9px;
+        }
+
+        .brand-icon {
+            width: 30px; height: 30px;
+            background: var(--accent); border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; color: #fff; font-family: inherit;
+        }
+
+        .nav-link {
+            text-decoration: none; color: var(--text2);
+            font-size: 14px; font-weight: 500;
+            padding: 6px 13px; border-radius: 7px;
+            transition: all 0.18s;
+        }
+
+        .nav-link:hover { color: var(--text); background: var(--surface2); }
+        .nav-study    { color: var(--green) !important; }
+        .nav-habit    { color: var(--blue) !important; }
+        .nav-analytics{ color: var(--yellow) !important; }
+
+        .theme-toggle {
+            margin-left: 14px; background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 22px; padding: 3px;
+            display: flex; gap: 2px;
+        }
+
+        .t-btn {
+            background: none; border: none;
+            padding: 5px 13px; border-radius: 18px;
+            cursor: pointer; font-size: 12.5px; font-weight: 600;
+            color: var(--muted); font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .t-btn.on {
+            background: var(--surface); color: var(--text);
+            box-shadow: 0 1px 5px rgba(0,0,0,0.18);
+        }
+
+        /* MAIN */
+        main { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+
+        .page-header {
+            display: flex; align-items: center; gap: 14px;
+            margin-bottom: 26px; flex-wrap: wrap;
+        }
+
+        .page-title {
+            font-family: 'Crimson Pro', 'Times New Roman', Georgia, serif;
+            font-size: 28px; font-weight: 700; color: var(--text);
+        }
+
+        .file-badge {
+            font-size: 11px; font-weight: 600;
+            color: var(--green);
+            background: var(--green-soft);
+            border: 1px solid rgba(31,202,150,0.28);
+            padding: 3px 10px; border-radius: 20px;
+            letter-spacing: 0.07em; text-transform: uppercase;
+        }
+
+        .file-name-label {
+            font-size: 13px; color: var(--muted);
+            margin-left: auto;
+        }
+
+        /* SEARCH BAR */
+        .search-row {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 16px; flex-wrap: wrap;
+        }
+
+        .search-wrap {
+            position: relative; flex: 1; max-width: 360px;
+        }
+
+        .search-icon {
+            position: absolute; left: 11px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted); width: 14px; pointer-events: none;
+        }
+
+        #searchInput {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 14px;
+            padding: 9px 12px 9px 34px;
+            outline: none;
+            transition: border-color 0.18s, background 0.25s;
+        }
+
+        #searchInput:focus { border-color: var(--accent); }
+        #searchInput::placeholder { color: var(--muted); }
+
+        .row-count {
+            font-size: 13px; color: var(--muted); white-space: nowrap;
+        }
+
+        /* TABS */
+        .tabs-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            border-radius: 10px 10px 0 0;
+            padding: 0 16px;
+            display: flex; gap: 2px;
+            overflow-x: auto; scrollbar-width: none;
+            transition: background 0.25s;
+        }
+
+        .tabs-container::-webkit-scrollbar { display: none; }
+
+        .tab {
+            padding: 11px 18px;
+            font-size: 13px; font-weight: 600;
+            cursor: pointer; white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            color: var(--muted);
+            transition: all 0.2s;
+            background: none;
+            border-top: none; border-left: none; border-right: none;
+            font-family: 'Source Sans 3', sans-serif;
+        }
+
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        /* PANEL */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0 0 14px 14px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: background 0.25s, border-color 0.25s;
+        }
+
+        .panel-no-tabs {
+            border-radius: 14px;
+        }
+
+        .sheet-panel { display: none; }
+        .sheet-panel.active { display: block; }
+
+        /* TABLE */
+        .table-wrap { overflow-x: auto; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+        thead tr { background: var(--header-bg); }
+
+        thead th {
+            padding: 10px 14px; text-align: left;
+            font-weight: 600; color: var(--accent);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+            font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+            transition: background 0.25s;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.12s;
+        }
+
+        tbody tr:nth-child(odd) { background: var(--row-alt); }
+        tbody tr:hover { background: var(--row-hover); }
+
+        tbody td {
+            padding: 10px 14px; color: var(--text);
+            max-width: 300px; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        tbody td:first-child { font-weight: 500; color: var(--accent); }
+
+        td.highlight { background: var(--accent-soft) !important; }
+
+        .no-results {
+            display: none; padding: 30px;
+            text-align: center; color: var(--muted); font-size: 13px;
+        }
+
+        /* STATE BOXES */
+        .state-box {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 12px; padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .state-box .icon { font-size: 36px; opacity: 0.5; }
+        .state-box p { font-size: 14px; }
+
+        .error-banner {
+            margin: 20px; padding: 14px 18px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 10px; color: #f87171; font-size: 14px;
+        }
+
+        /* DOWNLOAD BUTTON */
+        .btn-download {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--green); color: #fff;
+            border: none; border-radius: 8px;
+            padding: 9px 18px;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; text-decoration: none;
+            transition: opacity 0.18s, transform 0.1s;
+            white-space: nowrap;
+        }
+        .btn-download:hover  { opacity: 0.87; }
+        .btn-download:active { transform: scale(0.97); }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--surface); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-h); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="brand">
+        <span class="brand-icon">G</span>
+        GrowIt
+    </a>
+    <a href="/" class="nav-link">Dashboard</a>
+    <a href="/category/STUDY" class="nav-link nav-study">Study</a>
+    <a href="/category/HABIT" class="nav-link nav-habit">Habits</a>
+    <a href="/analytics" class="nav-link nav-analytics">Analytics</a>
+    <a href="/notes" class="nav-link">Notes</a>
+
+    <div class="theme-toggle">
+        <button class="t-btn" id="btn-light" onclick="setTheme('light')" type="button">☀ Light</button>
+        <button class="t-btn on"  id="btn-dark"  onclick="setTheme('dark')" type="button">◑ Dark</button>
+    </div>
+</nav>
+
+<main>
+
+    <div class="page-header">
+        <h1 class="page-title">📊 Excel Viewer</h1>
+        <span class="file-badge">XLSX</span>
+        <span class="file-name-label" th:text="${fileName} ?: ''"></span>
+        <a th:if="${fileName == 'habits.xlsx'}" href="/download-excel" class="btn-download">
+            ⬇ Download Excel
+        </a>
+        <a th:if="${fileName != null and fileName != 'habits.xlsx'}" href="/download-syllabus" class="btn-download">
+            ⬇ Download Syllabus
+        </a>
+    </div>
+
+    <!-- ERROR -->
+    <div th:if="${error}" class="error-banner" th:text="${error}"></div>
+
+    <!-- CONTENT -->
+    <div th:if="${sheets != null and !sheets.isEmpty()}">
+
+        <!-- SEARCH -->
+        <div class="search-row">
+            <div class="search-wrap">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search across all cells…" autocomplete="off"/>
+            </div>
+            <span class="row-count" id="rowCount"></span>
+        </div>
+
+        <!-- TABS (only if multiple sheets) -->
+        <div class="tabs-container" th:if="${#lists.size(sheets) > 1}">
+            <button th:each="sheet, iter : ${sheets}"
+                    class="tab"
+                    th:classappend="${iter.first} ? ' active' : ''"
+                    th:text="${sheet.name}"
+                    th:attr="data-tab=${'sheet-' + iter.index}"
+                    onclick="switchTab(this)" type="button">
+                Sheet
+            </button>
+        </div>
+
+        <!-- PANELS -->
+        <div th:classappend="${#lists.size(sheets) > 1} ? 'panel' : 'panel panel-no-tabs'">
+            <div th:each="sheet, iter : ${sheets}"
+                 class="sheet-panel"
+                 th:classappend="${iter.first} ? ' active' : ''"
+                 th:id="${'sheet-' + iter.index}">
+
+                <div class="table-wrap" th:if="${!sheet.rows.isEmpty()}">
+                    <table th:id="${'table-' + iter.index}">
+                        <thead>
+                            <tr>
+                                <th th:each="cell : ${sheet.rows[0]}" th:text="${cell}">Header</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="row, rowIter : ${sheet.rows}" th:if="${rowIter.index > 0}">
+                                <td th:each="cell : ${row}" th:text="${cell}" th:title="${cell}">—</td>
+                            </tr>
+                            <tr class="no-results" th:id="${'no-results-' + iter.index}">
+                                <td th:attr="colspan=${#lists.size(sheet.rows[0]) > 0 ? #lists.size(sheet.rows[0]) : 1}">
+                                    No matching rows found.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="state-box" th:if="${sheet.rows.isEmpty()}">
+                    <div class="icon">📭</div>
+                    <p>This sheet is empty.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NO DATA -->
+    <div th:if="${(sheets == null or sheets.isEmpty()) and error == null}" class="state-box">
+        <div class="icon">📄</div>
+        <p>No data available.</p>
+    </div>
+
+</main>
+
+<script>
+    (function() {
+        const saved = localStorage.getItem('habitos-theme') || 'dark';
+        applyTheme(saved);
+    })();
+
+    function setTheme(theme) {
+        applyTheme(theme);
+        localStorage.setItem('habitos-theme', theme);
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        document.getElementById('btn-light').classList.toggle('on', theme === 'light');
+        document.getElementById('btn-dark').classList.toggle('on',  theme === 'dark');
+    }
+
+    function switchTab(btn) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.sheet-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+        updateCount();
+        applySearch(document.getElementById('searchInput').value.trim().toLowerCase());
+    }
+
+    function updateCount() {
+        const active = document.querySelector('.sheet-panel.active');
+        if (!active) return;
+        const visible = active.querySelectorAll('tbody tr:not(.no-results):not([style*="display: none"])').length;
+        const total   = active.querySelectorAll('tbody tr:not(.no-results)').length;
+        const el = document.getElementById('rowCount');
+        if (el) el.textContent = visible === total ? `${total} rows` : `${visible} / ${total} rows`;
+    }
+
+    function applySearch(q) {
+        const active = document.querySelector('.sheet-panel.active');
+        if (!active) return;
+        const rows      = active.querySelectorAll('tbody tr:not(.no-results)');
+        const noResults = active.querySelector('.no-results');
+        let   visible   = 0;
+        rows.forEach(row => {
+            const show = !q || row.textContent.toLowerCase().includes(q);
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+            row.querySelectorAll('td').forEach(td => {
+                td.classList.toggle('highlight', q && td.textContent.toLowerCase().includes(q));
+            });
+        });
+        if (noResults) noResults.style.display = (visible === 0 && q) ? 'table-row' : 'none';
+        updateCount();
+    }
+
+    document.getElementById('searchInput')?.addEventListener('input', function() {
+        applySearch(this.value.trim().toLowerCase());
+    });
+
+    updateCount();
+</script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GrowIt — Sign Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    [data-theme="dark"] {
+        --bg:       #0f1117;
+        --surface:  #1a1e2e;
+        --surface2: #222840;
+        --border:   #2c3350;
+        --accent:   #5b6af0;
+        --text:     #dde2f0;
+        --text2:    #a0aac8;
+        --muted:    #5a6380;
+        --shadow:   0 8px 32px rgba(0,0,0,0.45);
+        --red-soft: rgba(239,68,68,0.12);
+        --red-text: #f87171;
+        --red-border: rgba(239,68,68,0.25);
+    }
+
+    [data-theme="light"] {
+        --bg:       #eef0f7;
+        --surface:  #ffffff;
+        --surface2: #f4f5fb;
+        --border:   #dde1ef;
+        --accent:   #4a58e0;
+        --text:     #1c2038;
+        --text2:    #4a527a;
+        --muted:    #8890aa;
+        --shadow:   0 8px 32px rgba(0,0,0,0.10);
+        --red-soft: rgba(239,68,68,0.07);
+        --red-text: #dc2626;
+        --red-border: rgba(239,68,68,0.2);
+    }
+
+    html { transition: background 0.25s; }
+
+    body {
+        font-family: 'Source Sans 3', 'Calibri', 'Segoe UI', sans-serif;
+        background: var(--bg); color: var(--text);
+        min-height: 100vh;
+        transition: background 0.25s, color 0.25s;
+    }
+
+    .theme-toggle {
+        position: fixed; top: 14px; right: 20px; z-index: 300;
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: 22px; padding: 3px;
+        display: flex; gap: 2px;
+        box-shadow: var(--shadow);
+        transition: background 0.25s;
+    }
+
+    .t-btn {
+        background: none; border: none;
+        padding: 5px 13px; border-radius: 18px;
+        cursor: pointer; font-size: 12.5px; font-weight: 600;
+        color: var(--muted); font-family: inherit; transition: all 0.2s;
+    }
+
+    .t-btn.on {
+        background: var(--surface); color: var(--text);
+        box-shadow: 0 1px 5px rgba(0,0,0,0.18);
+    }
+
+    .auth-wrapper {
+        min-height: 100vh;
+        display: flex; align-items: center; justify-content: center;
+        padding: 24px;
+    }
+
+    .auth-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 40px 36px;
+        width: 100%; max-width: 420px;
+        box-shadow: var(--shadow);
+        transition: background 0.25s, border-color 0.25s;
+    }
+
+    .auth-logo { text-align: center; margin-bottom: 28px; }
+
+    .auth-logo h1 {
+        font-family: 'Crimson Pro', 'Times New Roman', Georgia, serif;
+        font-size: 30px; font-weight: 700;
+        color: var(--accent); letter-spacing: 0.5px;
+    }
+
+    .auth-logo p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    .auth-card h2 {
+        font-family: 'Crimson Pro', 'Times New Roman', Georgia, serif;
+        font-size: 22px; font-weight: 600;
+        color: var(--text); margin-bottom: 24px; text-align: center;
+    }
+
+    .form-group { margin-bottom: 18px; }
+
+    .form-group label {
+        display: block; font-size: 12px;
+        color: var(--muted); margin-bottom: 7px;
+        text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+    }
+
+    .form-group input {
+        width: 100%; padding: 11px 14px;
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: 9px; color: var(--text);
+        font-family: 'Source Sans 3', sans-serif;
+        font-size: 14px; outline: none;
+        transition: border-color 0.18s, background 0.25s;
+    }
+
+    .form-group input:focus { border-color: var(--accent); background: var(--surface); }
+    .form-group input::placeholder { color: var(--muted); }
+
+    .btn-primary {
+        width: 100%; padding: 12px;
+        background: var(--accent); color: #fff;
+        border: none; border-radius: 9px;
+        font-family: 'Source Sans 3', sans-serif;
+        font-size: 15px; font-weight: 600; cursor: pointer;
+        margin-top: 6px;
+        transition: opacity 0.18s, transform 0.1s;
+    }
+
+    .btn-primary:hover  { opacity: 0.87; }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .auth-footer {
+        text-align: center; margin-top: 20px;
+        font-size: 13px; color: var(--muted);
+    }
+
+    .auth-footer a {
+        color: var(--accent); text-decoration: none; font-weight: 600;
+    }
+
+    .auth-alert.error {
+        padding: 10px 14px; border-radius: 9px;
+        font-size: 13px; margin-bottom: 18px;
+        background: var(--red-soft);
+        color: var(--red-text);
+        border: 1px solid var(--red-border);
+    }
+
+    .password-hint {
+        font-size: 12px; color: var(--muted); margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="theme-toggle">
+    <button class="t-btn" id="btn-light" onclick="setTheme('light')" type="button">☀ Light</button>
+    <button class="t-btn on"  id="btn-dark"  onclick="setTheme('dark')"  type="button">◑ Dark</button>
+</div>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+
+    <div class="auth-logo">
+      <h1>GrowIt</h1>
+      <p>Start your growth journey</p>
+    </div>
+
+    <h2>Create account</h2>
+
+    <div th:if="${error}" class="auth-alert error" th:text="${error}"></div>
+
+    <form th:action="@{/signup}" method="post">
+      <div class="form-group">
+        <label for="name">Full name</label>
+        <input type="text" id="name" name="name"
+               placeholder="Jane Doe" required autofocus/>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email"
+               placeholder="you@example.com" required/>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password"
+               placeholder="Min. 8 characters" minlength="8" required/>
+        <p class="password-hint">At least 8 characters recommended.</p>
+      </div>
+      <button type="submit" class="btn-primary">Create account</button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a th:href="@{/login}">Sign in</a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+    (function() {
+        const saved = localStorage.getItem('habitos-theme') || 'dark';
+        applyTheme(saved);
+    })();
+
+    function setTheme(theme) {
+        applyTheme(theme);
+        localStorage.setItem('habitos-theme', theme);
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        document.getElementById('btn-light').classList.toggle('on', theme === 'light');
+        document.getElementById('btn-dark').classList.toggle('on',  theme === 'dark');
+    }
+</script>
+</body>
+</html>
